@@ -47,6 +47,7 @@ Using the Features
 Starting the simulation
 --------------------
 Enable the ``i16sim`` addon and open up the i16sim tab in the top right corner of the user interface.
+
 Run ``from i16sim.commands import *`` in the console and at the start of every script
 
 Each feature

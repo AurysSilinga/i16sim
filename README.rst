@@ -103,9 +103,9 @@ Orientation Commands
 | **-- setlat** ()            | interactively enter lattice parameters (Angstroms |
 |                             | and Deg)                                          |
 +-----------------------------+---------------------------------------------------+
-| **-- setlat** ( name, a)    | assumes cubic                                     |
+| **-- setlat** (name, a)     | assumes cubic                                     |
 +-----------------------------+---------------------------------------------------+
-| **-- setlat** ( name, a, b) | assumes tetragonal                                |
+| **-- setlat** (name, a, b)  | assumes tetragonal                                |
 +-----------------------------+---------------------------------------------------+
 | **-- setlat** (name, a, b,  | assumes ortho                                     |
 | c)                          |                                                   |
@@ -148,7 +148,7 @@ Orientation Commands
 |                             | reflections                                       |
 +-----------------------------+---------------------------------------------------+
 | **-- calcub**               | (re)calculate u matrix from ref1 and ref2         |
-| ( num1|'tag1', num2|'tag2') |                                                   |
+| (num1|'tag1', num2|'tag2')  |                                                   |
 +-----------------------------+---------------------------------------------------+
 | **-- trialub** ()           | (re)calculate u matrix from ref1 only (check      |
 |                             | carefully)                                        |

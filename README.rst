@@ -25,7 +25,7 @@ Features
 Installation
 =======================
 #. Install `Blender <https://www.blender.org/download/>`_ 2.93.1 or newer.
-#. Download ``i16sim main.zip`` from GitHub and extract .
+#. Download ``i16sim main.zip`` from GitHub and extract.
 #. Open ``diffractometerXX.blend`` in Blender.
 #. Bring up the terminal if not already open so sript output can be viewed.
 #. Open ``./i16sim main/install/install_i16sim_environment.py`` in Blender's internal script editor.

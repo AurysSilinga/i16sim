@@ -32,8 +32,8 @@ Documentation
 
 
 .. |Read the docs|  image:: https://readthedocs.org/projects/i16sim/badge/?version=latest
-:target: https://i16sim.readthedocs.io/en/latest/?badge=latest
-:alt: Documentation Status
+   :target: https://i16sim.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
 
 Full documentation can be found here:
 

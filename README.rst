@@ -1,7 +1,7 @@
 ========================================================================
 i16sim readme
 ========================================================================
-Simulation package for the I16 6-circle kappa diffractometer at Diamond Light Source Ltd
+Simulation package for the I16 6-circle kappa diffractometer at Diamond Light Source Ltd.
 
 Implements `diffcalc <https://github.com/DiamondLightSource/diffcalc>`_ functionality in  `Blender <https://www.blender.org/>`_ and uses it to animate a model of the  `diffractometer <https://www.diamond.ac.uk/Instruments/Magnetic-Materials/I16/layout.html>`_.
 
@@ -23,7 +23,7 @@ Introduction video
 --------------------
 
 You can watch step-by-step guides to installing the package and using the features.
-The  `videos <https://github.com/AurysSilinga/i16sim/tree/main/videos>`_ are available on GitHub 
+The  `videos <https://github.com/AurysSilinga/i16sim/tree/main/videos>`_ are available on GitHub.
 
 Documentation
 =======================

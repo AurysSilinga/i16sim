@@ -23,7 +23,7 @@ Introduction video
 --------------------
 
 You can watch step-by-step guides to installing the package and using the features.
-The  `videos <https://github.com/AurysSilinga/i16sim/tree/main/videos>`_are available on GitHub 
+The  `videos <https://github.com/AurysSilinga/i16sim/tree/main/videos>`_ are available on GitHub 
 
 Documentation
 =======================

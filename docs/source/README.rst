@@ -25,7 +25,9 @@ Introduction video
 --------------------
 
 You can watch step-by-step guides to installing the package and using the features.
-The  `videos <https://github.com/AurysSilinga/i16sim/tree/main/videos>`_ are available on GitHub.
+The  `videos <https://github.com/AurysSilinga/i16sim/tree/main/videos>`_ are available on GitHub and on the I16 YouTube channel.
+
+Videos:  `Installation <https://youtu.be/yQji8m3zBZY>`_ and `Introduction <https://youtu.be/80_1f4kFLF0>`_.
 
 Installation
 =======================

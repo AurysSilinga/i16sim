@@ -1,4 +1,4 @@
-i16sim
+i16sim 
 ===================================
 
 Simulation package for the I16 6-circle kappa diffractometer at Diamond Light Source Ltd

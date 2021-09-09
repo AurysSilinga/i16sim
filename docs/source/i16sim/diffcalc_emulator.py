@@ -745,9 +745,9 @@ class DiffcalcEmulator:
         number_of_steps : int
             total number of steps
         *args : any, optional
-            passed on to the 'scan' command. Implemented options are: 'animate' makes the scan do 
-            an animation, 'wait, seconds:float' makes the animation wait for the set number of seconds 
-            between movements, 'collision' tests for collisions at every step.
+            passed on to the 'scan' command. Implemented options are: 'animate' makes the scan do an animation, 'wait, seconds:float' 
+            makes the animation wait for the set number of seconds between movements, 'collision' tests for collisions at every step. 
+
 
         """
         key,step,numsteps=args[:3]

@@ -1,13 +1,39 @@
-# -*- coding: utf-8 -*-
 """
 Created on 19/07/2021
 
 @author: Aurys Silinga
 
 Diffcalc emulator for the Python console in Blender.
-"""
 
 """
+
+
+"""
+bugs and todos:
+    
+add lattice fixing commands. e.g. get real vectors from UB
+
+add delta offsets. e.g. do do.pil
+
+#documentation
+mention what happens if lattice is wrong
+
+implement con command with dynamic parameters. 
+
+intesect and animate parameters for scans. Scans should be able to 
+create animations or check for collisions at every point
+
+sphere error of 1 micron
+
+falls asleep crash. 
+
+hkl scan should varify each h,k,l value separately and stop incrementing some 
+while others still increase.
+
+Directory problems
+
+
+
 from i16sim.diffcalc.hkl.calc import HklCalculation
 from i16sim.diffcalc.hkl.constraints import Constraints
 from i16sim.diffcalc.hkl.geometry import Position
@@ -33,15 +59,7 @@ import i16sim.user.additional_functions as additional_functions
 
 import bpy
 
-import importlib
-#importlib.reload(vectors)
-#importlib.reload(ikfk)
-importlib.reload(params)
-importlib.reload(scannables)
-importlib.reload(additional_scannables)
-importlib.reload(additional_functions)
 """
-
 class DiffcalcEmulator:
     """Moves the simulation in Blender and provides commands that mimic diffcalc in GDA"""
     def __init__(self,
@@ -301,7 +319,7 @@ class DiffcalcEmulator:
         Parameters
         ----------
         position : Position, optional
-            A position object describing eulerian angles. The default is current position.
+            A position object describing Eulerian angles. The default is current position.
         raise_error : bool, optional
             if function should raise error instead of returning false if 
             position is outside the safety limits. 
@@ -370,7 +388,7 @@ class DiffcalcEmulator:
         -------
         pos_best : Position
             the optimal position for this hkl.
-        va_best : TYPE
+        va_best : dict{ str:float }cal
             the corresponding virtual angles.
 
         """
@@ -605,13 +623,15 @@ class DiffcalcEmulator:
             print(self.cons.asdict)
         print()
             
-    def scan(self, *args,w=0.01): #needs update
+    def scan(self, *args):
         """Scan 'scannable' from 'start' to 'stop' in increments of 'step'.
         
-        Example::
+        Examples::
             
-            scan(eta,0,5,1) #moves to eta = 0, 1, 2, 3, 4, and 5 in turn
-        
+            scan(eta,0,5,1) # moves to eta = 0, 1, 2, 3, 4, and 5 in turn.
+            scan(l, 0.1, 2, 0.1, animate, wait, 0.1) # animates the l scan. Moves every 0.1 seconds.
+            con(mu,0,gam,0,psi,0)
+            scan(psi,0,10,1, collision) # tests for collisions at every value of psi.
 
         Parameters
         ----------
@@ -623,8 +643,9 @@ class DiffcalcEmulator:
             upper limit of scannable
         step : float or list of floats
             size of step
-        *args : any
-            other
+        *args : any, optional
+            Implemented options are: 'animate' makes the scan do an animation, 'wait, seconds:float'
+            makes the animation wait for the set number of seconds between movements, 'collision' tests for collisions at every step. 
         
             
 
@@ -634,63 +655,76 @@ class DiffcalcEmulator:
         
         print("Scan start", key.key,start,'to',stop, 'every' ,step)
         
-        #determine measuring time
-        if (len(args)==5 and args[4]=='w'):
-            wait=w
-        elif (len(args)==6 and args[4]=='w'):
-            wait=args[5]
-        else:
-            wait=0
-        
         if (key.key in dc.cons.asdict.keys()):
             hkl=self.scannables['hkl']()
             con_initial=self.cons.asdict[key.key]
             steps=list(np.arange(start,stop+step/10.,step))
             
-            for val in steps:
+            def scan_once(val, key=key, hkl=hkl):
                 self.con(key,val)
                 self.pos(self.scannables['hkl'],hkl)
-                #bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-                sleep(wait)
-            print("Scan finished")
-            self.con(key,con_initial)
-            print()
-            return None
+                
+            def scan_cleanup(con_initial=con_initial):
+                self.con(key,con_initial)
         
-        elif (key.key == 'hkl'):
-            start=np.array(start)
-            stop=np.array(stop)
-            step=np.array(step)
-            #print(start,stop,step)
-            
-            steps=[]
-            i=0
-            notfull=True
-            while notfull:
-               steps.append(list(start+step*i))
-               i+=1
-               for j in range(len(start)):
-                   if (start+step*i)[j]>(stop[j]+step[j]/10):
-                       notfull=False
-            #print(steps)
-            
         else:
-            #print(start,stop+step/10,step)
-            steps=list(np.arange(start,stop+step/10.,step))
-            #print(steps)
+            if (key.key == 'hkl'):
+                start=np.array(start)
+                stop=np.array(stop)
+                step=np.array(step)
+                #print(start,stop,step)
+                
+                steps=[]
+                i=0
+                notfull=True
+                while notfull:
+                   steps.append(list(start+step*i))
+                   i+=1
+                   for j in range(len(start)):
+                       if (start+step*i)[j]>(stop[j]+step[j]/10):
+                           notfull=False
+                #print(steps)
+                
+            else:
+                #print(start,stop+step/10,step)
+                steps=list(np.arange(start,stop+step/10.,step))
+                #print(steps)
+            def scan_once(val, key=key):
+                print(val)
+                self.pos(key,val)
+                
+            def scan_cleanup():
+                pass
             
-        for val in steps:
-            print(val)
-            self.pos(key,val)
-            #bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-            sleep(wait)
+        clean_args=[self.varifykey(arg) for arg in args[4:]]
+        if 'animate' in clean_args:
+            if 'wait' in clean_args:
+                i=clean_args.index('wait')
+                wait_time=clean_args[i+1]
+            else:
+                wait_time=0.1
+            print('Animating with wait time',wait_time)
+            bpy.types.Scene.animate_wait=wait_time
+            bpy.types.Scene.animate_instructions=[scan_once,steps,scan_cleanup]
+            bpy.ops.wm.modal_timer_operator()
+            return (None)
+                    
+        else:
+            col_test=False
+            if 'collision' in clean_args:
+                col_test=True
+                
+            for val in steps:
+                scan_once(val)
+                if col_test: self.intersect()
+                
+            scan_cleanup()
             
         print("Scan finished")
         print()
-        return None
     
     
-    def scancn(self, *args, w=0.01): #needs update
+    def scancn(self, *args):
         """Centered scan on current position.
         
         Scan 'scannable' around the starting position by going to 'numer_of_steps' number of positions
@@ -710,20 +744,14 @@ class DiffcalcEmulator:
             size of step
         number_of_steps : int
             total number of steps
-        *args : any
-            other
+        *args : any, optional
+            passed on to the 'scan' command. Implemented options are: 'animate' makes the scan do 
+        an animation, 'wait, seconds:float' makes the animation wait for the set number of seconds 
+        between movements, 'collision' tests for collisions at every step.
 
         """
         key,step,numsteps=args[:3]
         initial_pos=self.pos_to_sixc(list(self.position.astuple))
-        
-        #determine measuring time
-        if (len(args)==4 and args[3]=='w'):
-            wait=w
-        elif (len(args)==5 and args[3]=='w'):
-            wait=args[4]
-        else:
-            wait=0
         
         if (key.key=='hkl'):
             initial=np.array(key())
@@ -733,10 +761,13 @@ class DiffcalcEmulator:
             stop=list(start+step*(numsteps-1))
             step=list(step)
         else:
+            if (key.key in dc.cons.asdict.keys()):
+                hkl=self.scannables['hkl']
+                self.pos(hkl,hkl())
             initial=key()
             start=initial-step*(numsteps//2)
             stop=start+step*(numsteps-1)
-        self.scan(key,start,stop,step,'w',wait)
+        self.scan(key,start,stop,step,*args[3:])
         
         self.pos(self.scannables['sixc'],initial_pos)
         
@@ -1093,16 +1124,6 @@ class DiffcalcEmulator:
             e_angles=etok.KtoE([ktheta,kappa,kphi])
             self.moveto([mu,gamma,delta,*e_angles],use_limits=False)
         
-            
-
-        
-    def animate(self, *args):
-        """
-        Should make nice animations of scans
-        
-        Not implemented
-        """
-        pass
     
     def allhkl(self,hkl,*args):
         """Prints all potential positions for a certain hkl regardless of limits.
@@ -1318,8 +1339,7 @@ class DiffcalcEmulator:
         print()
     
     def addorient(self,hkl,xyz,name='',position=None):
-        """Add a reference orientation.
-
+        """
         Adds a reference orientation in the diffractometer
         coordinate system.
         
@@ -1771,391 +1791,12 @@ callable(getattr(object, method_name)) and '__' not in method_name]
 if __name__ == "__main__":
     #dc=bpy.types.Scene.diffractometer
     #dc=DiffcalcEmulator()
+    #clear()
     globals().update(dc.get_namespace())
-    #update_pos(90)
+    update_pos()
     print('start')
     
-    clear()
-    #print(tthp)
-    #pos(tthp,0)
-
-    #clear()
-    #intersect()
-    #loadub(0)
-    #simbl(debug=True)
-    #scs=additional_scannables.get_scannables(dc, scannables.Scannable)
-    #print(scs)
-    #pos(scs['mtthp'],69)
-    
-    #loadub(r'C:\Unsorted Stuff\Work Files\Blender tests\Diffrac\scripts\892941.nxs')
-    #print('st2')
-    #lastub()
-    #con(mu,0,gam,0,psi,0)
-    #scan(psi,0,10,1)
-    #con(mu,0,gam,0,phi,0)
-    #scan(hkl,[0.1,0,0],[1,0,0],[0.1,0,0])
-    #scan(hkl,[1,0,0],[1,0.3,0],[0,0.1,0])
-    ##pos(hkl)
-    #scancn(eta,0.1,10)
-    #scancn(hkl,[0.1,0,0],5)
-"""
-showlm()
-phi.min=0
-showlm()
-setlm(phi,[1,269])
-setlm('ktheta-delta',70)
-
-
-showlm(phi,'ktheta-delta')
-print(phi)
-"""
-
-"""
-pos(sixc,[1,2,3,4,5,6])
-pos(sixc,[1,2,3,4,5,6],eta,30)
-pos(kang,[1,2,3])
-pos(kphi)
-pos(kappa,5,ktheta,10)
-pos(phi,10,chi,20)
-pos(phi,10,chi,20,bisect,True)
-"""
-"""
-print(pos_to_sixc([4,5,6,3,2,1]))
-print(sixc_to_pos([1,2,3,4,5,6]))
-print(get_position())
-print(get_position(asdict=True))
-
-print(get_constraints())
-#print(get_ubcalc())
-print(get_hklcalc())
-print(get_position())
-
-#con(mu,0,gam,0,bisect,True)
-importlib.reload(vectors)
-print(setnphi())
-print(setnhkl())
-vectors.set_vector('reference azimuthal',setnphi())
-
-"""
-"""
-#print(get_scannables())
-importlib.reload(scannables)
-sc=scannables.base_scannables(dc)
-print(sc)
-x=sc['eta']
-
-print(repr(x),sc['eta'].inlimits())
-x.pos(-50)
-
-y=sc['psi']
-print(y,'...',y())
-#y.pos(10)
-z=sc['sixc']
-print(z,'...',z())
-z.pos([1,2,3,4,5,6])
-#print(list(sc.values()))
-#print(isinstance(sc['wait'], scannables.Scannable))
-a=sc['hkl']
-print(a,'...',a())
-a.pos([1,1,1])
-
-b=sc['l']
-print(b,'...',b())
-b.pos(1.5)
-
-c=sc['wl']
-print(c,'...',c())
-c.pos(1)
-
-d=sc['en']
-print(d,'...',d())
-d.pos(15)
-
-d=sc['k_angles']
-print(d,'...',d())
-d.pos([15,15,15])
-x.pos(-50)
-z.pos([-500,-95,-95,-10,-10,-30])
-d.pos([15,15,15])
-print(a.inlimits(),'hkl')
-print(b.inlimits(),'b')
-print(c.inlimits(),'c')
-print(d.inlimits(),'d')
-print(x.inlimits(raise_error=False),'eta x')
-print(y.inlimits(),'psi')
-print(z.inlimits(),'sixc')
-
-cl=scannables.create_composite_limits(dc)
-#print(cl['ktheta-delta'].inlimits(dc,raise_error=True))
-print(scannables.in_composite_limits(cl,raise_error=True))
-
-print(eta())
-"""
-"""
-dc.addorient([1,1,1],[1,0,0],'test1')
-dc.update_pos(90)
-dc.setlat('crys',5)
-dc.addorient([0,0,2],[0,1,0],'test2')
-dc.pos('sixc',[0,45,0,0,90,0])
-dc.addref([0,3,0],'ref1')
-dc.showorient()
-
-dc.pos('sixc')
-dc.calcub(1,2)
-dc.ub()
-dc.latt()
-dc.checkub()
-dc.con("mu",0,"gam",0,"psi",0)
-dc.allhkl([0,3,0])
-dc.showlm()
-dc.setlm('gamma',[0,69,0])
-dc.setlm('ktheta-delta',420)
-dc.showlm()
-dc.showlm('gamma')
-"""
-#print(dc.ui_call)
-#dc.pos('en')
-#dc.trialub('test1')
-#dc.loadub('C:\\Unsorted Stuff\\Work Files\\Blender tests\\Diffrac\\testfile2.txt')
-#dc.newub('testub')
-#dc.con('nu',0)
-#x=dc.ub()
-#print(x)
-#print(dc.read_visual_pos())
-"""
-dc.generate_namespace()
-update_pos()
-
-"""
-
-
-
-"""
-#missaligned horizontal orientation UB calculation
-dc.newub("sixcircle")
-
-dc.setlat("SiO2", 4.913, 5.405)
-dc.pos('sixc',    (5.31, 0.0, 10.62, 0, 0.0, 0))
-dc.addref(
-    (0, 0, 1),
-    "refl1",
-)
-
-dc.pos('sixc',    (5.31, 0.0, 10.62, 0, 90, 0))
-dc.addref(
-    (0, 1, 0),
-    "refl2",
-)
-
-dc.showref()
-dc.calcub(1, 2)
-dc.con("delta", 0, "phi", 0, "eta", 0)
-
-pos('sixc',[5.31, 0.0, 10.62, 0, 90, 0])
-dc.pos('hkl')
-dc.pos('hkl',[0,0,1])
-dc.pos('hkl')
-pos(sixc)
-
-showref()
-#calcub(1,2)
-print('text')
-
-dc.pos('hkl',[0,1,0])
-pos(sixc)
-dc.pos('hkl')
-pos('sixc',[5.31, 0.0, 10.62, 0, 90, 0])
-dc.pos('hkl')
-
-print("latfix")
-ub()
-setlat("Si02",1/0.9093410069663695*4.913, 5.405)
-calcub()
-pos('sixc',[5.31, 0.0, 10.62, 0, 90, 0])
-pos('hkl')
-pos('hkl',[0,1,0])
-#pos(hkl,[0,1,1])
-#enable_lm=True
-#pos(sixc)
-#pos(sixc,[0,0,0,0,90,0])
-#pos('hkl',[0,-1,0])
-#importlib.reload(vectors)
-#importlib.reload(vectors)
-#pos('sixc',[30, 10, 30, 5, 0, 90])
-#ub()
-"""
-
-
-"""
-ubm=dc.ubcalc.UB
-print(ubm)
-arr=np.array([0,1,0],ndmin=2).transpose()
-print(arr.shape,arr)
-dc.rv.rlv=True
-dc.rv.set_array(arr)
-print(dc.rv.get_array(ubm))
-
-"""
-
-"""
-#Diffcalc example vertical orientation UB calculation
-dc.limits=False
-
-dc.pos()
-dc.ub()
-
-dc.newub("example")
-dc.setlat('1Acube',5,5,5,90,90,90)
-dc.ub()
-
-dc.pos('wl',1)
-dc.c2th([0,0,1])
-dc.pos('sixc',[0, 60, 0, 30, 90, 0])
-dc.addref([0,0,1])
-dc.pos('hkl')
-
-dc.pos('sixc',[0, 90, 0, 45, 45, 90])
-dc.addref([0,1,1])
-dc.showref()
-
-dc.con('gam',0,'mu',0,'bisect',True)
-
-#glitch
-dc.sim('hkl',[1,0,1])
-
-
-dc.pos('hkl',[1,0,1])
-dc.addref([1,0,1],'101_aditional')
-
-dc.scale_reciprocal_vectors=False
-dc.showref()
-dc.calcub(1,3)
-
-dc.con('gam',0,'mu',0,'psi',0)
-
-dc.pos('sixc',[0,0,0,0,0,0])
-
-"""
-#pos(sixc)
-#ik()
-#fk()
-#dc.scale_reciprocal_vectors=False
-#pos('sixc')
-#fk()
-#ikfk.set_IK()
-
-#"""
-
-#dc.calcub(1,2)
-#dc.pos('sixc',[0, 90, 0, 45, 45, 90])
-#dc.pos(hkl,[0,1,1])
-#dc.pos(hkl)
-#dc.pos(hkl,[0,1,1])
-#dc.pos('sixc')
-#dc.pos('sixc',[0, 90, 0, 45, 45, 90])
-#dc.con('gam',0,'mu',0,'phi',0)
-
-
-
-
-#dc.pos('sixc',[0,90,0,0,0,0])
-#print(dc.get_q_phi(dc.position))
-#dc.pos('sixc',[0,30,0,0,0,0])
-#print(dc.get_q_phi(dc.position))
-#dc.pos('sixc',[0,160,0,0,0,0])
-#print(dc.get_q_phi(dc.position))
-#dc.pos('sixc',[0,0,-160,0,0,0])
-#print(dc.get_q_phi(dc.position))
-
-
-
-#pos(eta,10,chi,20)
-#sim(hkl,[1,1,0])
-#pos(sixc,[0,0,0,90,0,0])
-#pos(hkl,[1,1,0])
-#print(sim(hkl,[0,1,1]))
-
-#pos(sixc,[0,0,0,0,0,0])
-
-#print(get_scannables())
-#print(dc.cons.all)
-#"""
-
-#dc.enable_verbose(False)
-#dc.enable_lm(False)
-#dc.enable_collision_test()
-
-#dc.ik()
-#dc.fk()
-#dc.intersect()
-
-#dc.scan('hkl',[0,0,1],[0,0,1.5],[0,0,0.1],'w',0.01)
-#dc.scan('eta',0,20,1,'w')
-
-#dc.scancn('hkl',[0,0.01,0],3,'w')
-#dc.scancn('eta',1,5,'w')
-"""
-dc=DiffcalcEmulator()
-#dc.newub('test2'), 
-#print(dc.ubcalc)
-
-
-dc.ubcalc.set_lattice("cube", 1)
-
-#dc.ubcalc.n_hkl = (1, 0, 0)
-
-dc.ubcalc.add_reflection(
-    (0, 0, 1),
-    Position(0, 60.0, 0, 30, 90, 0),
-    dc.wl,
-    "refl1",
-)
-
-dc.ubcalc.add_reflection(
-    (0, 1, 1),
-    Position(0, 90, 0, 45, 45, 90),
-    dc.wl,
-    "refl2",
-)
-#dc.ubcalc.add_orientation((0, 1, 0), (0, 1, 0), None, "plane")
-#dc.ubcalc.calc_ub("refl1", "refl2")
-
-#dc.cons=Constraints({"qaz": 0, "alpha": 0, "eta": 0})
-dc.con('gam',0,'mu',0,'a_eq_b',True)
-dc.hklcalc = HklCalculation(dc.ubcalc, dc.cons)
-
-dc.pos('sixc',[1,20,30,5,90,5])
-
-#print(dc.wl)
-#print(dc.position.asdict)
-dc.pos('hkl')
-#dc.surfnhkl([0,0,1])
-#dc.setnphi([3,5,1])
-#dc.ub()
-#dc.listref()
-#dc.ub()
-#dc.pos('sixc',[1,20,30,5,90,5])
-#dc.pos('sixc',[0,0,0,0,0,0])
-#dc.pos('hkl', [0, 0, 1])
-#dc.con()
-#dc.con('psi',0)
-#print(dc.pos_from_hkl([0,0,1])[0].asdict)
-#dc.con()
-#
-#dc.pos('a_eq_b',False)
-#dc.pos('a_eq_b')
-
-#print(dc.position.asdict)
-#dc.pos('sixc',[0,0,0,0,90,0])
-#dc.pos('kang',[0,90,90])
-#print(dc.ubcalc)
-#dc.pos('sixc')
-
-#dc.pos('sixc', [0,0,0, 32.73240720961235,  -65.59550266211437, 122.73240720961235])
-#dc.pos('kang')
-#dc.pos('wl',1,'phi', 90)
-#dc.con('a_eq_b')
-#dc.pos('kappa',50)
-"""
-
+    lastub()
+    pos(hkl,[0,0,0.1])
+    scan(l,0.1,2,0.1,animate,wait,0.1)
 

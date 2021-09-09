@@ -34,8 +34,6 @@ Known bugs and todos
 
 * Implement con command with dynamic number of parameters. Need to call con(bisect, True), while GDA needs con(bisect).
 
-* Intesect and animate parameters for scans. Scans should be able to create animations or check for collisions at every point.
-
 * Add lattice fixing commands. e.g. get real vectors from UB.
 
 * Add delta offsets. e.g. do do.pil.

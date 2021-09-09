@@ -9,7 +9,7 @@ If used for your research, please credit Aurys Silinga.
 
 .. contents::
 
-Features
+Features 
 =======================
 
 - **3D model of the diffractometer with mesh error < 1 mm**

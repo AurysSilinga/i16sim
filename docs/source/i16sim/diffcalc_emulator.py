@@ -646,9 +646,6 @@ class DiffcalcEmulator:
         *args : any, optional
             Implemented options are: 'animate' makes the scan do an animation, 'wait, seconds:float'
             makes the animation wait for the set number of seconds between movements, 'collision' tests for collisions at every step. 
-        
-            
-
 
         """
         key,start,stop,step=args[:4]
@@ -747,6 +744,7 @@ class DiffcalcEmulator:
         *args : any, optional
             passed on to the 'scan' command. Implemented options are: 'animate' makes the scan do an animation, 'wait, seconds:float' 
             makes the animation wait for the set number of seconds between movements, 'collision' tests for collisions at every step. 
+            
 
 
         """

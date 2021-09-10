@@ -87,7 +87,8 @@ Each feature
     ``enable_lm(True)``.
     The scripting environment at the beamline detects syntax errors but cannot predict runtime errors, such as moving the diffractometer to a forbidden position.
     If limits are enabled, all diffcalc commands should throw the same errors as in GDA. If you wish to show diffractometer movements while the script is running, 
-    you can pass the ``animate`` parmeter to ``scan`` functions.
+    you can pass the ``animate`` parmeter to ``scan`` functions. Also, to show all available scannables run ``pos()`` without parameters, and to move a scannable 
+    run ``pos(scannable, value)``.
     
 - Reading nexus data or GDA state files to show diffractometer state during experiment
     Select the file with the ``file`` widget in the UI and press the ``import from file`` button.
